@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block body %}
+    <div class = "container">
+        <h4>LoggetOut! see you later!</h4>
+        <div class="row">
+            <div class="col-md-3 col-md-offset-3">
+                <a class = "btn btn-success" href = "{% url 'login' %}">LogIn again</a>
+            </div>
+
+            <div class="col-md-3 col-md-offset-3">
+                <a class = "btn btn-success" href = "{% url 'register' %}">Register</a>
+            </div>
+
+        </div>
+
+
+{% endblock %}

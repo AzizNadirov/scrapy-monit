@@ -1,0 +1,48 @@
+{% extends 'monitor/base.html' %}
+{% block title %}Edit profile - {{user.user_name}} {% endblock %}
+{% load crispy_forms_tags %}
+
+
+{% block body %}
+
+<div class="row">
+    <legend class="border-bottom mb-4">
+        Profile info
+    </legend>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" value="{{user.user_name}}" readonly>
+      </div>
+      <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" class="form-control" id="name" value="{{user.first_name}}" readonly>
+      </div>
+      <div class="mb-3">
+          <label for="name" class="form-label">Surname</label>
+          <input type="text" class="form-control" id="surname" value="{{user.surname}}" readonly>
+        </div>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" value="{{user.email}}" readonly>
+      </div>
+    </div>
+  </div>
+<hr>
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <fieldset class="form-group">
+        <legend class="border-bottom mb-4">
+            Edit
+        </legend>
+        {{form|crispy}}
+    </fieldset>
+    <div class="form-group">
+        <button class="btn btn-outline-info" type="submit">
+            Apply
+        </button>
+    </div>
+</form>
+</div>
+
+{% endblock %}
