@@ -87,11 +87,11 @@ class InstanceHandler:
 
         return jobs
     
-
     
     def check_deamon(self) -> bool:
         """ returns True if deamon is active """
         r = api_daemon_status(self.url)
+        if r is None: return None
         return r['status'] == 'ok'
     
 
@@ -112,7 +112,7 @@ class InstanceHandler:
             if r is None:
                 return None
             for spider in r:
-                spider.append(SpiderSchema(name=spider, instance=self.__schema, project=project))
+                spiders.append(SpiderSchema(name=spider, instance=self.__schema, project=project))
 
         return spiders
     
@@ -147,9 +147,10 @@ class InstanceHandler:
 
 
 
-def get_all_active_jobs(*instances: Tuple[InstanceHandler], top_n=5) -> dict:
+def get_all_active_jobs(instances, top_n=5) -> dict:
     res = {}
     for instance in instances:
+        print(instance)
         ih = InstanceHandler(instance)
         res[instance.name] = [job for job in ih.jobs if job.status == 'running']
         res[instance.name].sort(key=(lambda j: j.started), reverse=True )

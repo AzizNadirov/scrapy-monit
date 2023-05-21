@@ -13,9 +13,15 @@
             <a class="nav-link" href="#">Actives</a>
           </li>
         </ul>
-        <li class="nav-item d-flex pr-9 me-4">
-          <a class="nav-link btn btn-primary" href="{% url 'profile' %}">Profile</a>
-        </li>
+          {% if user.is_authenticated %}
+            <li class="nav-item d-flex pr-9 me-4">
+              <a class="nav-link btn btn-primary" href="{% url 'profile' %}">Profile</a>
+            </li>
+          {% else %}
+            <li class="nav-item d-flex pr-9 me-4">
+              <a class="nav-link btn btn-primary" href="{% url 'login' %}">LogIn</a>
+            </li>
+          {% endif %}
         <form class="d-flex" role="search">
           <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
           <button class="btn btn-outline-success" type="submit">Search</button>
