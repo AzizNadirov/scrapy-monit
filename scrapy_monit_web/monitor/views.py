@@ -4,16 +4,23 @@ from django.views.generic import View
 from django.views.generic import ListView,CreateView, DeleteView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from .models import InstanceModel
+from .models import InstanceModel, JobModel, ProjectModel, Shedule, SpiderModel
 from .forms import AddInstanceForm
+from .scrapyd_handlers import get_all_active_jobs
 
 
 
 
 class MainView(View):
     def get(self, request: HttpRequest):
-        content = {'user_': 'Aziz'}
+        content = {}
+        if request.user.is_authenticated:
+            instances = InstanceModel.objects.filter(added_by=request.user).all()
+            active_jobs = get_all_active_jobs(instances)
+            content = {'instances': instances, 'actives': active_jobs}
+            
         return render(request, 'monitor/main.html', content)
+        
 
 
 # CRUD Instance

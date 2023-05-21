@@ -46,23 +46,27 @@ def api_listversions(url: str, project: str='default'):
         return None
 
 
-def api_listspiders(urls: str, project: str='default', _version: str=None):
+def api_listspiders(url: str, project: str='default', _version: str=None)-> List[str]:
     """  """
-    url = f"{urls}/listspiders.json"
+    endp = f"{url}/listspiders.json"
     # check if project in projects
-    assert project in api_list_projects()
-    if not _version is None:
-        assert _version in api_listversions(project)
-    params = {'project': project, '_version': _version}
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        data = response.json()
-        return data['spiders']
-    else:
+    projects = api_list_projects(url)
+    if not projects is None:
+        assert project in projects
+        if not _version is None:
+            assert _version in api_listversions(project)
+        params = {'project': project, '_version': _version}
+        response = requests.get(endp, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            return data['spiders']
+        else:
+            return None
+    else: 
         return None
     
 
-def api_listjobs(project: str='default'):
+def api_listjobs(url: str, project: str='default') -> dict:
     """ 
         {
             "status": "ok",
@@ -91,12 +95,12 @@ def api_listjobs(project: str='default'):
             ]
         }
     """
-    url = f"{url}/listjobs.json"
+    endp = f"{url}/listjobs.json"
     # check if project in projects
-    assert project in api_list_projects()
+    assert project in api_list_projects(url)
 
     params = {'project': project}
-    response = requests.get(url, params=params)
+    response = requests.get(endp, params=params)
     if response.status_code == 200:
         data = response.json()
         return data
@@ -135,8 +139,8 @@ def api_delproject(url: str, project: str):
     
 
 def get_scrapyd_logs(url: str, project_name: str, spider_name: str, job_id: str):
-    """  """
-    # http://185.250.148.161; default; wt_list; f205c3d4f64311ed8ad9ed526d4a5438
+    """ returns log of job """
+    
     url = f"{url}/logs/{project_name}/{spider_name}/{job_id}.log"
     response = requests.get(url)
     if response.status_code == 200:
@@ -147,14 +151,26 @@ def get_scrapyd_logs(url: str, project_name: str, spider_name: str, job_id: str)
 
 
 
-def run_scrapy_spider(url: str, spider_name: str, project_name: str='default'):
-    """  """
-    assert spider_name in api_listspiders(project=project_name)
+def run_scrapy_spider(url: str, spider_name: str, project_name: str='default')->bool:
+    """ run spider """
+    assert spider_name in api_listspiders(url=url, project=project_name)
 
     schedule_url = f'{url}/schedule.json'
     response = requests.post(schedule_url, data={'project': project_name, 'spider': spider_name})
     if response.status_code == 200:
         print('Spider scheduled successfully.')
+        return True
     else:
         print('Spider scheduling failed.')
+        return False
+
+
+
+
+
+
+
+
+
+
 

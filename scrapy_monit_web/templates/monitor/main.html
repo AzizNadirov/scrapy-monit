@@ -1,10 +1,37 @@
 {% extends 'monitor/base.html' %}
 {% block title %}ScrapyMonitor - Main{% endblock title %}
 {% block body %}
-    <div class="container">
-       <h1>Hello {{user_}}! </h1> 
-    </div>
-
+<div class="row">
+    {% if user.is_authenticated %}
+        <h5 class="h5">Your ScrapyInstances: {{instances|length}}</h5>
+        {% for instance in instances %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <a class="card-title" href="{{instance.get_absolute_url}}">{{ instance.name }}</a>
+                        <p class="card-text">
+                            <strong>Projects:</strong> {{ instance.projects|length|length}}
+                        </p>
+                        <p class="card-text">
+                            <strong>Spiders:</strong> {{ instance.spiders|length }}
+                        </p>
+                        <p class="card-text">
+                            <strong>Jobs:</strong> {{ instance.jobs|length}}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+        <h5 class="h5">
+            There is no instances yet.
+        </h5>
+    {% endfor %}
+    {% endif %}
+    
+    <h5 class="h5">
+        You have to create local account and add ScrapyInstance for using this tool!
+    </h5>
+</div>
 {% endblock body %}
 
 

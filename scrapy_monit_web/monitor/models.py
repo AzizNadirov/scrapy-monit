@@ -1,4 +1,7 @@
 from django.db import models
+from django.urls import reverse
+
+
 
 
 
@@ -16,7 +19,7 @@ class InstanceModel(models.Model):
 
 
 class ProjectModel(models.Model):
-    instance = models.ForeignKey(InstanceModel, on_delete=models.CASCADE)
+    instance = models.ForeignKey(InstanceModel, on_delete=models.CASCADE, related_name='projects')
     name = models.CharField('Name', default='default', max_length=120)
     version = models.CharField("Version", blank=True, max_length=120)
 
@@ -34,12 +37,29 @@ class SpiderModel(models.Model):
         return f"ScrapyProjectSpider: {self.name}"
     
 
+class JobModel(models.Model):
+    instance = models.ForeignKey(InstanceModel, verbose_name='instance', on_delete=models.CASCADE, related_name='jobs')
+    id = models.CharField('id', max_length=120, primary_key=True)
+    pid = models.CharField('pid', max_length=120, null=True)
+    spider = models.ForeignKey(SpiderModel, verbose_name='spider', on_delete=models.CASCADE, related_name='jobs')
+    project = models.ForeignKey(ProjectModel, verbose_name='project', on_delete=models.CASCADE, related_name='jobs')
+    started = models.DateTimeField('started', auto_now=False, auto_now_add=False, null=True)
+    ended = models.DateField('ended', auto_now=False, auto_now_add=False, null=True)
+    duration = models.PositiveIntegerField('duration in minutes')
+    status = models.CharField('status', max_length=50, choices=(('p', 'pending'), ('r', 'running'), ('f', 'finished')))
+
+
+    def get_absolute_url(self):
+        return reverse("", kwargs={"pk": self.pk})
+    
+    def __str__(self):
+        return f"ScrapyInstanceJob[{self.status}]: {self.instance.name}|{self.spider.name}"
 
 
 class Shedule(models.Model):
     name = models.CharField("Name", max_length=120)
-    spider = models.ForeignKey(SpiderModel, on_delete=models.CASCADE)
-    author = models.ForeignKey("users.Profile", verbose_name="Author", on_delete=models.SET_NULL, null=True)
+    spider = models.ForeignKey(SpiderModel, on_delete=models.CASCADE, related_name='shedules')
+    author = models.ForeignKey("users.Profile", verbose_name="Author", on_delete=models.SET_NULL, null=True, related_name='shedules')
     type = models.CharField(choices=(('Once', 'once'), ('Periodic', 'periodic')), default='Periodic', max_length=60)
     start_datetime = models.DateTimeField('Once Start DateTime', null=True)
     period = models.PositiveIntegerField("Period in hours", null=True)
