@@ -1,6 +1,6 @@
 from django.db import models
 from django.urls import reverse
-
+from .scrapyd_handlers import InstanceState
 
 
 
@@ -10,8 +10,15 @@ class InstanceModel(models.Model):
     description = models.CharField("Description", max_length=255)
     address = models.URLField('Address')
     created_at = models.DateTimeField('Creatoin',auto_now_add = True)
-    updated = models.DateTimeField('Updated', auto_now = True)
-    added_by = models.ForeignKey('users.Profile', on_delete=models.SET_NULL, null=True)
+    updated_at = models.DateTimeField('Updated', auto_now = True)
+    author = models.ForeignKey('users.Profile', on_delete=models.SET_NULL, null=True)
+
+
+
+
+    def __fill_instance(self, instance_state: InstanceState):
+        self.spiders = instance_state.spiders
+
 
     def __str__(self):
         return f"ScrapyInstance: {self.name}"
@@ -54,6 +61,7 @@ class JobModel(models.Model):
     
     def __str__(self):
         return f"ScrapyInstanceJob[{self.status}]: {self.instance.name}|{self.spider.name}"
+
 
 
 class Shedule(models.Model):

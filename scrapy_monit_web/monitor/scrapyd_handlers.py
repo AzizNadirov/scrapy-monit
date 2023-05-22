@@ -1,6 +1,8 @@
-from typing import List, Union, Optional, Tuple, Dict
+from typing import List, Union, Sequence, Tuple, Dict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from django.db.models import QuerySet
+
 
 from .scrapyd_api import (api_daemon_status, api_delproject, api_delversion, api_list_projects, api_listjobs,
                           api_listspiders, api_listversions, get_scrapyd_logs, run_scrapy_spider, subdict)
@@ -23,7 +25,6 @@ class ProjectSchema:
 @dataclass
 class SpiderSchema:
     name: str
-    instance: InstanceSchema
     project: ProjectSchema
 
 
@@ -32,20 +33,20 @@ class SpiderSchema:
 class JobSchema:
     """ duration in hour """
     id: int
-    spider: SpiderSchema
-    project: ProjectSchema
     status: str
-    instance: InstanceSchema = None
+    spider: SpiderSchema
+    # project: ProjectSchema
+    # instance: InstanceSchema = None
     pid: int = None
     started: datetime = None
     ended: datetime = None
     duration: int = None
 
 
-class InstanceHandler:
-    def __init__(self, instance):
-        self.name:      str =                   instance.name
-        self.url:       str =                   instance.address
+class InstanceState:
+    def __init__(self, instance_model):
+        self.name:      str =                   instance_model.name
+        self.url:       str =                   instance_model.address
         self.__schema:  InstanceSchema =        InstanceSchema(self.name, self.url)
         self.active:    bool =                  None
         self.projects:  List[ProjectSchema] =   None
@@ -146,13 +147,23 @@ class InstanceHandler:
         return get_scrapyd_logs(url=self.url, project_name=project_name,spider_name=spider_name, job_id=job_id)
 
 
+def get_IS(instance_models: Sequence)->List[InstanceState]:
+    """ takes Instance models and returns list of instance states """
+    assert instance_models
 
-def get_all_active_jobs(instances, top_n=5) -> dict:
+    states = [InstanceState(model) for model in instance_models]
+    return states
+
+
+
+def get_all_active_jobs(instances: Tuple[InstanceState], top_n: int =5) -> dict:
+    """ takes tuple of InstanceStates and return dict as Dict[instance.name: job] """
+    assert top_n >= 1
+    assert instances
+
     res = {}
     for instance in instances:
-        print(instance)
-        ih = InstanceHandler(instance)
-        res[instance.name] = [job for job in ih.jobs if job.status == 'running']
+        res[instance.name] = [job for job in instance.jobs if job.status == 'running']
         res[instance.name].sort(key=(lambda j: j.started), reverse=True )
         res[instance.name] = res[instance.name][: top_n]
 
@@ -160,3 +171,4 @@ def get_all_active_jobs(instances, top_n=5) -> dict:
     
 
 
+    
