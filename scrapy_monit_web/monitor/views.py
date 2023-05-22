@@ -4,6 +4,7 @@ from django.views.generic import View
 from django.views.generic import ListView,CreateView, DeleteView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import QuerySet
+from django.db.models.functions import Now
 
 
 from .models import InstanceModel, JobModel, ProjectModel, Shedule, SpiderModel
@@ -17,15 +18,18 @@ class MainView(View):
     def get(self, request: HttpRequest):
         content = {}
         if request.user.is_authenticated:
-            instances = InstanceModel.objects.filter(added_by=request.user).all()
-            states = get_IS(instances)
-            active_jobs = get_all_active_jobs(instances)
-            content = {'instances': instances, 'actives': active_jobs}
+            instances = InstanceModel.objects.filter(author=request.user).all()
+            if len(instances) != 0:
+                states = get_IS(instances)
+                assert len(instances) == len(states)
+                instances = [save_state(model, state) for model, state in zip(instances, states)]
+                active_jobs = get_all_active_jobs(instances)
+                active_jobs=[]
+                content = {'instances': instances, 'actives': active_jobs}
             
         return render(request, 'monitor/main.html', content)
 
     
-
 
 # CRUD Instance
 
@@ -52,12 +56,12 @@ class UpdateInstanceView(LoginRequiredMixin,UserPassesTestMixin, UpdateView):
     template_name = 'monitor/update_instance.html'
 
     def form_valid(self, form):
-        form.instance.added_by = self.request.user
+        form.instance.author = self.request.user
         return super().form_valid(form)
 
     def test_func(self):
         post = self.get_object()
-        return self.request.user == post.added_by
+        return self.request.user == post.author
     
 
 
@@ -69,30 +73,32 @@ class DeleteInstanceView(LoginRequiredMixin, UserPassesTestMixin ,DeleteView):
 
     def test_func(self):
         post = self.get_object()
-        return self.request.user == post.added_by
+        return self.request.user == post.author
     
-
 
 
 
 def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
-    new_instance = InstanceModel.objects.create(
-        name =          model.name,
-        description =   model.description,
-        address =       model.address,
-        created_at =    model.created_at)
-    new_instance.save()
+    # new_instance = InstanceModel.objects.create(
+    #     name =          model.name,
+    #     description =   model.description,
+    #     address =       model.address,
+    #     created_at =    model.created_at)
+    # new_instance.save()
+    model.projects.all().delete()
+    model.updated_at=Now()
     
     # take care projects
     for project_s in state.projects:
         ProjectModel.objects.create(
-            instance = new_instance,
+            instance = model,
             name = project_s.name).save()
     # take care projects
     for spider_s in state.spiders:
         project = ProjectModel.objects.get(name=spider_s.project.name)
         SpiderModel.objects.create(
             project = project,
+            instance = model,
             name = spider_s.name
         ).save()
     # take care jobs
@@ -101,7 +107,7 @@ def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
         project = ProjectModel.objects.get(name=job_s.project.name)
         spider = SpiderModel.objects.get(name=job_s.spider.name, project=project)
         JobModel.objects.create(
-            instance = new_instance,
+            instance = model,
             id = job_s.id,
             pid = job_s.pid,
             spider = spider,
@@ -109,8 +115,8 @@ def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
             started = job_s.started,
             ended = job_s.ended,
             duration = job_s.duration,
-            status = job_s.status,
-        ).save()
+            status = job_s.status).save()
+    return model
 
 
     

@@ -15,7 +15,7 @@ class ProfileView(LoginRequiredMixin, View):
     RECENT_NUM = 5
     def get(self, request):
         user = request.user
-        instance_queryset = InstanceModel.objects.filter(added_by__id=user.id).order_by('-created_at')[:self.RECENT_NUM]
+        instance_queryset = InstanceModel.objects.filter(author__id=user.id).order_by('-created_at')[:self.RECENT_NUM]
         context = {'instances': instance_queryset}
         return render(request, 'users/profile.html', context=context)
 

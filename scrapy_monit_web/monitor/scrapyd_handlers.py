@@ -113,7 +113,7 @@ class InstanceState:
             if r is None:
                 return None
             for spider in r:
-                spiders.append(SpiderSchema(name=spider, instance=self.__schema, project=project))
+                spiders.append(SpiderSchema(name=spider, project=project))
 
         return spiders
     
@@ -156,16 +156,20 @@ def get_IS(instance_models: Sequence)->List[InstanceState]:
 
 
 
-def get_all_active_jobs(instances: Tuple[InstanceState], top_n: int =5) -> dict:
-    """ takes tuple of InstanceStates and return dict as Dict[instance.name: job] """
+def get_all_active_jobs(instances, top_n: int =5) -> dict:
+    """ takes list of InstanceModels and return dict as Dict[instance.name: job] """
     assert top_n >= 1
     assert instances
+    
 
     res = {}
     for instance in instances:
-        res[instance.name] = [job for job in instance.jobs if job.status == 'running']
+        print(instance.jobs)
+        res[instance.name] = [job for job in instance.jobs.filter(status='running')]
         res[instance.name].sort(key=(lambda j: j.started), reverse=True )
         res[instance.name] = res[instance.name][: top_n]
+
+    print(f"RES: {res}")
 
     return res
     

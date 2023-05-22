@@ -37,11 +37,13 @@ class ProjectModel(models.Model):
 
 
 class SpiderModel(models.Model):
-    project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE)
+    instance = models.ForeignKey(InstanceModel, verbose_name='instance', on_delete=models.CASCADE, related_name='spiders')
+    project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE, related_name='spiders')
     name = models.CharField("Name", max_length=120)
 
     def __str__(self):
         return f"ScrapyProjectSpider: {self.name}"
+    
     
 
 class JobModel(models.Model):
@@ -56,8 +58,10 @@ class JobModel(models.Model):
     status = models.CharField('status', max_length=50, choices=(('p', 'pending'), ('r', 'running'), ('f', 'finished')))
 
 
+
     def get_absolute_url(self):
         return reverse("", kwargs={"pk": self.pk})
+    
     
     def __str__(self):
         return f"ScrapyInstanceJob[{self.status}]: {self.instance.name}|{self.spider.name}"
