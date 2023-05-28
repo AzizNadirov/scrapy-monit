@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}{{job.spider.name}}:{{job.id}}{% endblock title %}
+{% block body %}
+<div class="row">
+    <h3 class="h3">
+        <span class="h3">{{job.instance.name}}|{{job.spider.name}}|{{job.id}}: [{{job.status}}]</span>
+    </h3>
+</div>
+<div class="p card-body">
+    LOGS:
+</div>
+{% endblock body %}
+

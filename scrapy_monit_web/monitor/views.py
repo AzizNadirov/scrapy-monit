@@ -24,7 +24,8 @@ class MainView(View):
                 assert len(instances) == len(states)
                 instances = [save_state(model, state) for model, state in zip(instances, states)]
                 active_jobs = get_all_active_jobs(instances)
-                active_jobs=[]
+                print(f"ACTIVE JOBS: {instances[0]}")
+
                 content = {'instances': instances, 'actives': active_jobs}
             
         return render(request, 'monitor/main.html', content)
@@ -34,10 +35,20 @@ class MainView(View):
 # CRUD Instance
 
 class DetailInstanceView(View):
-    def get(self, request: HttpRequest, pk: int):
-        instance = get_object_or_404(InstanceModel, id=pk)
+    def get(self, request: HttpRequest, name: str):
+        instance = get_object_or_404(InstanceModel, name=name)
+        active_jobs = instance.jobs.filter(status='running')
+        context = {'instance': instance, 'actives': active_jobs}
+        return render(request, 'monitor/instance_details.html', context)
 
 
+class SpiderDetailView(View):
+    def get(self, request: HttpRequest, name: str, spider_name):
+        instance = get_object_or_404(InstanceModel, name=name)
+        spider = get_object_or_404(SpiderModel, name=spider_name, instance=instance)
+        active_jobs = instance.jobs.filter(status='running', spider=spider)
+        context = {'spider': spider, 'actives': active_jobs}
+        return render(request, 'monitor/spider_details.html', context)
 
 
 class AddInstanceView(LoginRequiredMixin, CreateView):
@@ -76,15 +87,20 @@ class DeleteInstanceView(LoginRequiredMixin, UserPassesTestMixin ,DeleteView):
         return self.request.user == post.author
     
 
+class JobDetailView(LoginRequiredMixin, View):
+    def get(self, request: HttpRequest, instance_name: str, spider_name: str, job_id: str):
+        job = get_object_or_404(JobModel, spider=spider_name, id=job_id)
+        print(f"JOB: {job}")
+
+        context = {'job': job}
+        return render(request, 'monitor/job_details.html', context)
+    
+
 
 
 def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
-    # new_instance = InstanceModel.objects.create(
-    #     name =          model.name,
-    #     description =   model.description,
-    #     address =       model.address,
-    #     created_at =    model.created_at)
-    # new_instance.save()
+    """  """
+    print(state.jobs)
     model.projects.all().delete()
     model.updated_at=Now()
     
@@ -112,9 +128,9 @@ def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
             pid = job_s.pid,
             spider = spider,
             project = project,
-            started = job_s.started,
-            ended = job_s.ended,
-            duration = job_s.duration,
+            started = job_s.start_time,
+            ended = job_s.end_time,
+            duration = job_s.duration,  
             status = job_s.status).save()
     return model
 

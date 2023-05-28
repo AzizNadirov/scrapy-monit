@@ -35,12 +35,14 @@ class JobSchema:
     id: int
     status: str
     spider: SpiderSchema
-    # project: ProjectSchema
-    # instance: InstanceSchema = None
+    project: ProjectSchema
+    instance: InstanceSchema = None
     pid: int = None
-    started: datetime = None
-    ended: datetime = None
+    start_time: datetime = None
+    end_time: datetime = None
     duration: int = None
+    log_url: str = None
+    items_url: str = None
 
 
 class InstanceState:
@@ -68,25 +70,29 @@ class InstanceState:
         """ converts 'api_listjob' response into list of Jobs """
         types_fields = {'pending': ['project', 'spider', 'id', 'pid', 'start_time'], 
                         'running': ['project', 'spider', 'id', 'pid', 'start_time'], 
-                        'finished': ['project', 'spider', 'id', 'start_time', 'end_time']}
+                        'finished': ['project', 'spider', 'id', 'start_time', 'end_time', 'log_url', 'items_url']}
         
-        jobs = []
+        jobs_res = []
         
-        for type in types_fields.keys():
-            jobs: List[dict] = jobs_dict[type]
+        for status in types_fields.keys():
+            jobs: List[dict] = jobs_dict[status]
             for job in jobs:
-                j = JobSchema(**types_fields[type])
-                if j.started:   j.started =     datetime.strptime(j.started)
-                if j.ended:     j.ended =       datetime.strptime(j.ended)
+                job['status'] = status
+                # print(f"LOOK: {job}")
+                j = JobSchema(**job)
+                format = '%Y-%m-%d %H:%M:%S.%f'
+                if j.start_time:   j.start_time =     datetime.strptime(j.start_time, format)
+                if j.end_time:     j.end_time =       datetime.strptime(j.end_time, format)
 
-                if type == 'finished':
-                    j.duration = j.ended - j.started
+                if status == 'finished':
+                    j.duration = j.end_time - j.start_time
+                    j.duration = j.duration.total_seconds() / 60
                 j.instance = self.__schema
                 j.project = ProjectSchema(name=j.project, instance=self.__schema)
                 j.spider = SpiderSchema(name=j.spider, project=j.project)
-                jobs.append(j)
+                jobs_res.append(j)
 
-        return jobs
+        return jobs_res
     
     
     def check_deamon(self) -> bool:
@@ -157,7 +163,7 @@ def get_IS(instance_models: Sequence)->List[InstanceState]:
 
 
 def get_all_active_jobs(instances, top_n: int =5) -> dict:
-    """ takes list of InstanceModels and return dict as Dict[instance.name: job] """
+    """ takes list of InstanceModels and return dict as Dict[instance.name: List[job]] """
     assert top_n >= 1
     assert instances
     

@@ -1,4 +1,4 @@
-{% extends 'monitor/base.html' %}
+{% extends 'base.html' %}
 {% block title %}Edit profile - {{user.user_name}} {% endblock %}
 {% load crispy_forms_tags %}
 
@@ -38,7 +38,7 @@
         {{form|crispy}}
     </fieldset>
     <div class="form-group">
-        <button class="btn btn-outline-info" type="submit">
+        <button class="btn btn-outline-danger" type="submit">
             Apply
         </button>
     </div>

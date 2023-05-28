@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}{{instance.name}}{% endblock title %}{{instance.name}}
+{% block body %}
+<div class="row">
+    <h3 class="h3">
+        <span class="h3">Jobs: {{spider.jobs.all|length}}</span>
+    </h3>
+</div>
+{% for job in spider.jobs.all %}
+    <div class="card mb-3">
+        <div class="card-title link pl-2">
+            <a class="h5 ml-2" href="{{job.get_absolute_url}}">
+                {{job.id}}|{{job.status}}|
+            </a>
+        </div>
+        <div class="card-body">
+            <ul>
+                <li>Total jobs: {{spider.jobs.all|length}}</li>
+                <li>Active jobs: {{actives.all|length}}</li>
+            </ul>
+        </div>
+    </div>
+{% endfor %}
+{% endblock body %}
+

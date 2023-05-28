@@ -14,10 +14,9 @@ class InstanceModel(models.Model):
     author = models.ForeignKey('users.Profile', on_delete=models.SET_NULL, null=True)
 
 
-
-
-    def __fill_instance(self, instance_state: InstanceState):
-        self.spiders = instance_state.spiders
+    def get_absolute_url(self):
+        return reverse("instance_detail", kwargs={"name": self.name})
+    
 
 
     def __str__(self):
@@ -41,6 +40,12 @@ class SpiderModel(models.Model):
     project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE, related_name='spiders')
     name = models.CharField("Name", max_length=120)
 
+
+    def get_absolute_url(self):
+        return reverse("spider_detail", kwargs={"name": self.instance.name, 'spider_name': self.name})
+    
+
+
     def __str__(self):
         return f"ScrapyProjectSpider: {self.name}"
     
@@ -54,13 +59,15 @@ class JobModel(models.Model):
     project = models.ForeignKey(ProjectModel, verbose_name='project', on_delete=models.CASCADE, related_name='jobs')
     started = models.DateTimeField('started', auto_now=False, auto_now_add=False, null=True)
     ended = models.DateField('ended', auto_now=False, auto_now_add=False, null=True)
-    duration = models.PositiveIntegerField('duration in minutes')
+    duration = models.PositiveIntegerField('duration in minutes', null=True)
     status = models.CharField('status', max_length=50, choices=(('p', 'pending'), ('r', 'running'), ('f', 'finished')))
 
 
 
     def get_absolute_url(self):
-        return reverse("", kwargs={"pk": self.pk})
+        kwargs = {"instance_name": self.instance.name, 'spider_name': self.spider.name, 'job_id': self.id}
+        print(f'reverse for: {kwargs}')
+        return reverse("job_detail", kwargs=kwargs)
     
     
     def __str__(self):
