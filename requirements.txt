@@ -1,0 +1,4 @@
+django
+scrapy
+django-crispy-forms
+crispy-bootstrap5

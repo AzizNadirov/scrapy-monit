@@ -2,7 +2,7 @@ from django.db import models
 from django.urls import reverse
 from .scrapyd_handlers import InstanceState
 
-
+from .scrapyd_handlers import get_scrapyd_logs
 
 
 class InstanceModel(models.Model):
@@ -64,9 +64,18 @@ class JobModel(models.Model):
 
 
 
+
+    def get_logs(self, project_name='default')->str:
+        """returns logs of the job"""
+        logs = get_scrapyd_logs(url=self.instance.address, project_name=project_name, spider_name=self.spider.name, job_id=self.id)
+        print()
+        return logs
+
+
+
     def get_absolute_url(self):
         kwargs = {"instance_name": self.instance.name, 'spider_name': self.spider.name, 'job_id': self.id}
-        print(f'reverse for: {kwargs}')
+        # print(f'reverse for: {kwargs}')
         return reverse("job_detail", kwargs=kwargs)
     
     

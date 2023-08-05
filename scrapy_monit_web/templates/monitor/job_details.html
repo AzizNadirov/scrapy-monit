@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}{{job.spider.name}}:{{job.id}}{% endblock title %}
+{% block body %}
+<div class="row">
+    <h4 class="h4">
+        <span class="h4"><a href="{{job.instance.get_absolute_url}}">{{job.instance.name}}</a>|--> <a href="{{job.spider.get_absolute_url}}">{{job.spider.name}}</a>|-->{{job.id}}: [{{job.status}}]</span>
+        <br>
+    </h4>
+</div>
+<div class="card">
+    <div class="card-header h4">
+        LOGS:
+    </div>
+    <div class="card-body" style="white-space: pre;">
+        <pre class=text-small>
+            {{logs|escape}}
+        </pre>
+    </div>
+</div>
+{% endblock body %}
+

@@ -9,7 +9,7 @@ from django.db.models.functions import Now
 
 from .models import InstanceModel, JobModel, ProjectModel, Shedule, SpiderModel
 from .forms import AddInstanceForm
-from .scrapyd_handlers import get_all_active_jobs, get_IS, InstanceState
+from .scrapyd_handlers import get_all_active_jobs, get_IS, InstanceState, get_scrapyd_logs
 
 
 
@@ -89,10 +89,9 @@ class DeleteInstanceView(LoginRequiredMixin, UserPassesTestMixin ,DeleteView):
 
 class JobDetailView(LoginRequiredMixin, View):
     def get(self, request: HttpRequest, instance_name: str, spider_name: str, job_id: str):
-        job = get_object_or_404(JobModel, spider=spider_name, id=job_id)
-        print(f"JOB: {job}")
-
-        context = {'job': job}
+        job = get_object_or_404(JobModel, spider__name=spider_name, pk=job_id)
+        logs = job.get_logs()
+        context = {'job': job, 'logs': logs}
         return render(request, 'monitor/job_details.html', context)
     
 

@@ -118,6 +118,7 @@ def get_scrapyd_logs(url: str, project_name: str, spider_name: str, job_id: str)
     url = f"{url}logs/{project_name}/{spider_name}/{job_id}.log"
     response = requests.get(url)
     if response.status_code == 200:
+        print(f"GOT RES FRON REQ: {response.text}")
         return response.text
     else:
         raise Exception(f"Exception: status code got: {response.status_code}")
@@ -132,7 +133,6 @@ def run_scrapy_spider(url: str, spider_name: str, project_name: str='default')->
     schedule_url = f'{url}schedule.json'
     response = requests.post(schedule_url, data={'project': project_name, 'spider': spider_name})
     if response.status_code == 200:
-        print('Spider scheduled successfully.')
         return True
     else:
         print('Spider scheduling failed.')
