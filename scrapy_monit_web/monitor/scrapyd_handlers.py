@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from django.db.models import QuerySet
 
-
+from .exceptions import InstanceIsInactive
 from .scrapyd_api import (api_daemon_status, api_delproject, api_delversion, api_list_projects, api_listjobs,
                           api_listspiders, api_listversions, get_scrapyd_logs, run_scrapy_spider, subdict)
 
@@ -56,13 +56,12 @@ class InstanceState:
         self.jobs:      List[JobSchema] =       None
 
         if not self.check_deamon():
-            raise ValueError("Instance daemon is not active.")
+            self.active = False
         else:
             self.active = True
-        
-        self.projects = self.get_projects()
-        self.spiders = self.get_spiders()
-        self.jobs = self.get_joblist()
+            self.projects = self.get_projects()
+            self.spiders = self.get_spiders()
+            self.jobs = self.get_joblist()
 
 
 
@@ -78,7 +77,6 @@ class InstanceState:
             jobs: List[dict] = jobs_dict[status]
             for job in jobs:
                 job['status'] = status
-                # print(f"LOOK: {job}")
                 j = JobSchema(**job)
                 format = '%Y-%m-%d %H:%M:%S.%f'
                 if j.start_time:   j.start_time =     datetime.strptime(j.start_time, format)
@@ -155,7 +153,7 @@ class InstanceState:
 
 def get_IS(instance_models: Sequence)->List[InstanceState]:
     """ takes Instance models and returns list of instance states """
-    assert instance_models
+    # assert instance_models
 
     states = [InstanceState(model) for model in instance_models]
     return states
@@ -163,22 +161,14 @@ def get_IS(instance_models: Sequence)->List[InstanceState]:
 
 
 def get_all_active_jobs(instances, top_n: int =5) -> dict:
-    """ takes list of InstanceModels and return dict as Dict[instance.name: List[job]] """
-    assert top_n >= 1
-    assert instances
-    
+    """ takes list of InstanceModel and return dict as Dict[instance.name: List[job]] """
 
     res = {}
     for instance in instances:
-        print(instance.jobs)
+        if not instance.active:
+            continue
         res[instance.name] = [job for job in instance.jobs.filter(status='running')]
         res[instance.name].sort(key=(lambda j: j.started), reverse=True )
         res[instance.name] = res[instance.name][: top_n]
 
-    print(f"RES: {res}")
-
     return res
-    
-
-
-    

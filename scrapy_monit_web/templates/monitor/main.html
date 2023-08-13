@@ -3,36 +3,56 @@
 {% block body %}
     {% if user.is_authenticated %}
     <div class="row">
-        <h3 class="h3">Your ScrapyInstances: {{instances|length}}</h5>
+        <h3 class="h3">Your ScrapyInstances: {{ instances|length }}</h3>
     </div>
-    {% for instance in instances %}
     <div class="row">
-        <div class="card pb-4 ml-3 pr-3">
-            <div class="card-body">
-                <a class="card-title h4" href="{{instance.get_absolute_url}}">{{ instance.name }}</a>
-                <p class="card-text">
-                    <strong>Projects:</strong> {{ instance.projects.all|length}}
-                </p>
-                <p class="card-text">
-                    <strong>Spiders:</strong> {{ instance.projects.first.spiders.all|length}}
-                </p>
-                <p class="card-text">
-                    <strong>Jobs:</strong> {{ instance.jobs.all|length}}
-                </p>
-            </div>
-        </div>
-    {% empty %}
-        <h5 class="h5">
-            There is no instances yet.
-        </h5>
-    {% endfor %}
+        <table class="table ml-3">
+            <thead>
+                <tr>
+                    <th>Instance Name</th>
+                    <th>Projects</th>
+                    <th>Spiders</th>
+                    <th>Jobs</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for instance in instances %}
+                <tr {% if instance.active %}class="hover-effect"{% endif %}>
+                    <td>
+                        {% if instance.active %}
+                        <a class="card-title h4" href="{{ instance.get_absolute_url }}">{{ instance.name }}</a>
+                        {% else %}
+                        <a class="card-title h4" href="#">{{ instance.name }}</a>
+                        <span class="card-text danger">INSTANCE IS <strong class="button button-danger">INACTIVE</strong></span>
+                        {% endif %}
+                    </td>
+                    {% if instance.active %}
+                    <td>
+                        <strong>Projects:</strong> {{ instance.projects.all|length }}
+                    </td>
+                    <td>
+                        <strong>Spiders:</strong> {{ instance.projects.first.spiders.all|length }}
+                    </td>
+                    <td>
+                        <strong>Jobs:</strong> {{ instance.jobs.all|length }}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">
+                        <h5 class="h5">There are no instances yet.</h5>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
     {% else %}
-        <h5 class="h5">
-            You have to create local account and add ScrapyInstance for using this tool!
-        </h5>
+    <div class="row">
+        <div class="col">
+            <h5 class="h5">You have to create a local account and add a ScrapyInstance to use this tool!</h5>
+        </div>
+    </div>
     {% endif %}
 {% endblock body %}
-
-
-

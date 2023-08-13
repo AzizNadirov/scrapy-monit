@@ -11,11 +11,13 @@ def subdict(_dict: dict, keys: Union[list, tuple]):
 
 
 
-def api_daemon_status(url: str):
+def api_daemon_status(url: str)->Union[requests.Response, None]:
+    """ return response if instance daemon is running, otherwise None """
     url = f"{url}daemonstatus.json"
-    print(f"requesting to {url}")
-    response = requests.get(url)
-    print(f"GOT:{response}")
+    try:
+        response = requests.get(url)
+    except Exception:
+        return None
     if response.status_code == 200:
         data = response.json()
         fields = ["status","running", "pending", "finished", "node_name"]
@@ -26,8 +28,8 @@ def api_daemon_status(url: str):
 
 def api_list_projects(url: str):
     url = f"{url}listprojects.json"
-    print(f"sending get to {url}")
     response = requests.get(url)
+    print(response)
     if response.status_code == 200:
         data = response.json()
         return data['projects']
@@ -39,7 +41,7 @@ def api_listversions(url: str, project: str='default'):
     """  """
     url = f"{url}listversions.json"
     # check if project in projects
-    assert project in api_list_projects()
+    assert project in api_list_projects(url)
     params = {'project': project}
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -102,13 +104,14 @@ def api_delproject(url: str, project: str):
     """  """
     url = f"{url}delproject.json"
     # check if project in projects
-    assert project in api_list_projects()
+    # assert project in api_list_projects(url)
     params = {'project': project}
     response = requests.post(url, params=params)
     if response.status_code == 200:
         data = response.json()
-        return data['status']
+        return data
     else:
+        print(response)
         return None
     
 
@@ -118,12 +121,11 @@ def get_scrapyd_logs(url: str, project_name: str, spider_name: str, job_id: str)
     url = f"{url}logs/{project_name}/{spider_name}/{job_id}.log"
     response = requests.get(url)
     if response.status_code == 200:
-        print(f"GOT RES FRON REQ: {response.text}")
+        # print(f"GOT RES FRON REQ: {response.text}")
         return response.text
     else:
         raise Exception(f"Exception: status code got: {response.status_code}")
     
-
 
 
 def run_scrapy_spider(url: str, spider_name: str, project_name: str='default')->bool:

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Schedules
+{% endblock title %}
+
+{% block body %}
+    {% for sc in schedules %}
+        <div class="card schedules-card">
+            <div class="card-header d-flex justify-content-between">
+                <a class="btn btn-info" href="{{sc.get_absolute_url}}">{{sc.name}}</a>
+                <div>
+                    <span>Created by: {{sc.author.user_name}}</span> |
+                    <span>Created at: {{sc.created_at}}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <span>Trigger: {{sc.trigger.name}}</span> |
+                <span>Type: {{sc.trigger.trigger}}</span>
+            </div>
+        </div>
+    {% empty %}
+        <div class="card">
+            <div class="card-body">
+                There are no schedules yet
+            </div>
+        </div>
+    {% endfor %}
+{% endblock body %}

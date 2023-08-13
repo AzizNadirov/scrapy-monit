@@ -12,6 +12,9 @@
           <li class="nav-item">
             <a class="nav-link" href="#">Actives</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'schedules_main' %}">Schedules</a>
+          </li>
         </ul>
           {% if user.is_authenticated %}
             <li class="nav-item d-flex pr-9 me-4">

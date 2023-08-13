@@ -1,0 +1,3 @@
+
+class InstanceIsInactive(Exception):
+    pass

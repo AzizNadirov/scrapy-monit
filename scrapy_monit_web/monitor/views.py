@@ -1,3 +1,5 @@
+from typing import List, Union
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpRequest
 from django.views.generic import View
@@ -7,7 +9,7 @@ from django.db.models import QuerySet
 from django.db.models.functions import Now
 
 
-from .models import InstanceModel, JobModel, ProjectModel, Shedule, SpiderModel
+from .models import InstanceModel, JobModel, ProjectModel, SpiderModel
 from .forms import AddInstanceForm
 from .scrapyd_handlers import get_all_active_jobs, get_IS, InstanceState, get_scrapyd_logs
 
@@ -15,16 +17,25 @@ from .scrapyd_handlers import get_all_active_jobs, get_IS, InstanceState, get_sc
 
 
 class MainView(View):
+    def __update_active_flag(self, instances: List[InstanceModel])->List[InstanceModel]:
+        updateds = []
+        for instance in instances:
+            instance.active = instance.is_active()
+            updateds.append(instance)
+        return updateds
+    
     def get(self, request: HttpRequest):
         content = {}
         if request.user.is_authenticated:
             instances = InstanceModel.objects.filter(author=request.user).all()
+            instances = self.__update_active_flag(instances)
             if len(instances) != 0:
-                states = get_IS(instances)
-                assert len(instances) == len(states)
-                instances = [save_state(model, state) for model, state in zip(instances, states)]
-                active_jobs = get_all_active_jobs(instances)
-                print(f"ACTIVE JOBS: {instances[0]}")
+                # return states only for active instances
+                instances_active = [instance for instance in instances if instance.active]
+                states = get_IS(instances_active)
+                assert len(instances_active) == len(states)
+                instances_active = [save_state(model, state) for model, state in zip(instances_active, states)]
+                active_jobs = get_all_active_jobs(instances_active)
 
                 content = {'instances': instances, 'actives': active_jobs}
             
@@ -61,7 +72,7 @@ class AddInstanceView(LoginRequiredMixin, CreateView):
     
 
 
-class UpdateInstanceView(LoginRequiredMixin,UserPassesTestMixin, UpdateView):
+class UpdateInstanceView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = InstanceModel
     fields = ['name', 'address', 'description']
     template_name = 'monitor/update_instance.html'
@@ -98,11 +109,10 @@ class JobDetailView(LoginRequiredMixin, View):
 
 
 def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
-    """  """
-    print(state.jobs)
+    """  """ null=True
     model.projects.all().delete()
     model.updated_at=Now()
-    
+    assert state.active is True
     # take care projects
     for project_s in state.projects:
         ProjectModel.objects.create(
@@ -110,7 +120,7 @@ def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
             name = project_s.name).save()
     # take care projects
     for spider_s in state.spiders:
-        project = ProjectModel.objects.get(name=spider_s.project.name)
+        project = ProjectModel.objects.get(name=spider_s.project.name, instance__name=spider_s.project.instance.name)
         SpiderModel.objects.create(
             project = project,
             instance = model,
@@ -119,8 +129,11 @@ def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
     # take care jobs
     for job_s in state.jobs:
         # retrieve project and spider
-        project = ProjectModel.objects.get(name=job_s.project.name)
-        spider = SpiderModel.objects.get(name=job_s.spider.name, project=project)
+        project = ProjectModel.objects.get(instance__name=spider_s.project.instance.name, name=job_s.project.name)
+        spider = SpiderModel.objects.get(name=job_s.spider.name, 
+                                         project__name=project.name, 
+                                         project__instance__name=job_s.project.instance.name)
+        
         JobModel.objects.create(
             instance = model,
             id = job_s.id,

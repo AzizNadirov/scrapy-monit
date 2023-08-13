@@ -1,19 +1,36 @@
+from datetime import datetime 
+from datetime import timedelta 
+
 from django.db import models
 from django.urls import reverse
+
 from .scrapyd_handlers import InstanceState
 
-from .scrapyd_handlers import get_scrapyd_logs
+from .scrapyd_handlers import get_scrapyd_logs, api_daemon_status
+
+
+
 
 
 class InstanceModel(models.Model):
+    """ ScrapyMonit instance model """
     name = models.CharField("Instance name", max_length=120)
     description = models.CharField("Description", max_length=255)
     address = models.URLField('Address')
     created_at = models.DateTimeField('Creatoin',auto_now_add = True)
     updated_at = models.DateTimeField('Updated', auto_now = True)
     author = models.ForeignKey('users.Profile', on_delete=models.SET_NULL, null=True)
+    active = models.BooleanField(default=True)
 
 
+    
+    def is_active(self)->bool:
+        """check if instance daemon is running"""
+        r = api_daemon_status(url=self.address)
+        print(r is None)
+        return not r is None
+
+    
     def get_absolute_url(self):
         return reverse("instance_detail", kwargs={"name": self.name})
     
@@ -21,10 +38,13 @@ class InstanceModel(models.Model):
 
     def __str__(self):
         return f"ScrapyInstance: {self.name}"
+    
+
 
 
 
 class ProjectModel(models.Model):
+    """ scrapyd project model """
     instance = models.ForeignKey(InstanceModel, on_delete=models.CASCADE, related_name='projects')
     name = models.CharField('Name', default='default', max_length=120)
     version = models.CharField("Version", blank=True, max_length=120)
@@ -36,10 +56,11 @@ class ProjectModel(models.Model):
 
 
 class SpiderModel(models.Model):
+    """ scrapyd spider model """
     instance = models.ForeignKey(InstanceModel, verbose_name='instance', on_delete=models.CASCADE, related_name='spiders')
     project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE, related_name='spiders')
     name = models.CharField("Name", max_length=120)
-
+    triggers = models.ManyToManyField("schedules.TriggerModel", related_name='spiders', null=True)
 
     def get_absolute_url(self):
         return reverse("spider_detail", kwargs={"name": self.instance.name, 'spider_name': self.name})
@@ -52,6 +73,7 @@ class SpiderModel(models.Model):
     
 
 class JobModel(models.Model):
+    """ scrapyd job model """
     instance = models.ForeignKey(InstanceModel, verbose_name='instance', on_delete=models.CASCADE, related_name='jobs')
     id = models.CharField('id', max_length=120, primary_key=True)
     pid = models.CharField('pid', max_length=120, null=True)
@@ -62,15 +84,10 @@ class JobModel(models.Model):
     duration = models.PositiveIntegerField('duration in minutes', null=True)
     status = models.CharField('status', max_length=50, choices=(('p', 'pending'), ('r', 'running'), ('f', 'finished')))
 
-
-
-
     def get_logs(self, project_name='default')->str:
         """returns logs of the job"""
         logs = get_scrapyd_logs(url=self.instance.address, project_name=project_name, spider_name=self.spider.name, job_id=self.id)
-        print()
         return logs
-
 
 
     def get_absolute_url(self):
@@ -84,29 +101,6 @@ class JobModel(models.Model):
 
 
 
-class Shedule(models.Model):
-    name = models.CharField("Name", max_length=120)
-    spider = models.ForeignKey(SpiderModel, on_delete=models.CASCADE, related_name='shedules')
-    author = models.ForeignKey("users.Profile", verbose_name="Author", on_delete=models.SET_NULL, null=True, related_name='shedules')
-    type = models.CharField(choices=(('Once', 'once'), ('Periodic', 'periodic')), default='Periodic', max_length=60)
-    start_datetime = models.DateTimeField('Once Start DateTime', null=True)
-    period = models.PositiveIntegerField("Period in hours", null=True)
-    is_active = models.BooleanField("Active", default=True)
 
 
-
-    def __build_str(self):
-        status = 'active' if self.is_active else 'inactive'
-        if self.type in ('Once', 'once'):
-            return f"<{status}>Once at {self.start_datetime}"
-        
-        elif self.type in ('Periodic', 'periodic'):
-            return f"<{status}>Periodic every {self.period} hours"
-
-        else:
-            raise ValueError(f"Incorrect value for shedule type:'{self.type}'")
-
-
-    def __str__(self):
-        return f"ScrapySpiderSheduler[{self.name}]: {self.__build_str()}"
     

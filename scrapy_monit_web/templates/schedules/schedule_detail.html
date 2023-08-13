@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Schedule Detail - {{ schedule.name }}
+{% endblock title %}
+
+{% block body %}
+    <div class="container">
+        <h2> {{schedule.name}} </h2>
+        <table class="table">
+            <tbody>
+                <tr>
+                    <th scope="row">Spider</th>
+                    <td>{{ schedule.spider.name }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Author</th>
+                    <td>{{ schedule.author.user_name }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Trigger</th>
+                    <td>{{ schedule.trigger.trigger }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Created at</th>
+                    <td>{{ schedule.created_at }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Active</th>
+                    <td>{{ schedule.is_active }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="mt-3">
+            <a href="#" class="btn btn-primary">Edit</a>
+            <a href="#" class="btn btn-danger">Delete</a>
+            {% if schedule.is_active %}
+                <a href="#" class="btn btn-warning">Deactivate</a>
+            {% else %}
+                <a href="#" class="btn btn-success">Activate</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock body %}
