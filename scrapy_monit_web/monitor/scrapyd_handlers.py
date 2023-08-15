@@ -26,6 +26,7 @@ class ProjectSchema:
 class SpiderSchema:
     name: str
     project: ProjectSchema
+    identifier: str
 
 
 
@@ -117,7 +118,7 @@ class InstanceState:
             if r is None:
                 return None
             for spider in r:
-                spiders.append(SpiderSchema(name=spider, project=project))
+                spiders.append(SpiderSchema(name=spider, project=project, identifier=f"{self.name}:{spider}"))
 
         return spiders
     

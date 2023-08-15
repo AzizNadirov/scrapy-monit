@@ -109,7 +109,7 @@ class JobDetailView(LoginRequiredMixin, View):
 
 
 def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
-    """  """ null=True
+    """  """
     model.projects.all().delete()
     model.updated_at=Now()
     assert state.active is True
@@ -118,15 +118,16 @@ def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
         ProjectModel.objects.create(
             instance = model,
             name = project_s.name).save()
-    # take care projects
+    # take care spiders
     for spider_s in state.spiders:
         project = ProjectModel.objects.get(name=spider_s.project.name, instance__name=spider_s.project.instance.name)
         SpiderModel.objects.create(
             project = project,
             instance = model,
-            name = spider_s.name
+            name = spider_s.name,
+            identifier = spider_s.identifier
         ).save()
-    # take care jobs
+    # take care jobsget_IS
     for job_s in state.jobs:
         # retrieve project and spider
         project = ProjectModel.objects.get(instance__name=spider_s.project.instance.name, name=job_s.project.name)
