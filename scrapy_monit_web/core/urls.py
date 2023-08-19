@@ -23,5 +23,6 @@ urlpatterns = [
     path('instance/<str:name>/<str:spider_name>/', SpiderDetailView.as_view(), name = 'spider_detail'),
     path('instance/<str:instance_name>/<str:spider_name>/<str:job_id>/', JobDetailView.as_view(), name = 'job_detail'),
     path('schedules/', include('schedules.urls')),
+    path('api/', include('api.urls')),
 
 ]

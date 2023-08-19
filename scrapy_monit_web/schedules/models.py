@@ -67,11 +67,17 @@ class TriggerModel(models.Model):
 
 class Schedule(models.Model):
     name = models.CharField("Name", max_length=120)
-    spider = models.ForeignKey('monitor.SpiderModel', on_delete=models.SET_NULL, null=True, related_name='shedules', to_field='identifier')
-    author = models.ForeignKey("users.Profile", verbose_name="Author", on_delete=models.CASCADE, related_name='shedules', null=True)
+    spider = models.ForeignKey('monitor.SpiderModel', on_delete=models.SET_NULL, null=True, related_name='schedules', to_field='identifier')
+    spider_identifier = models.CharField(max_length=128, null=True, default=None, blank=True)
+    author = models.ForeignKey("users.Profile", verbose_name="Author", on_delete=models.CASCADE, related_name='schedules', null=True)
     trigger = models.ForeignKey(TriggerModel, on_delete=models.SET_NULL, null=True, related_name='schedule')
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     is_active = models.BooleanField("Active", default=True)
+
+
+    def save(self, *args, **kwargs):
+        self.spider_identifier = self.spider.identifier
+        super().save(*args, **kwargs)
 
 
     def get_absolute_url(self):

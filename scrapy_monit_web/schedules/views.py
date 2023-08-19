@@ -14,7 +14,6 @@ class MainScheduleView(LoginRequiredMixin, View):
     def get(self, request: HttpRequest):
         schedules = Schedule.objects.filter(is_active=True).all()
         context = {'schedules': schedules}
-        print(f"LEN: {len(schedules)}")
         return render(request, 'schedules/main.html', context)
 
 

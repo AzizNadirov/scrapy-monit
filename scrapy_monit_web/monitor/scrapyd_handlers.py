@@ -22,11 +22,21 @@ class ProjectSchema:
     instance: InstanceSchema
 
 
+
+@dataclass
+class TriggerSchema:
+    name: str = None
+    author: str = None
+    status: bool = None
+
+
+
 @dataclass
 class SpiderSchema:
     name: str
     project: ProjectSchema
     identifier: str
+    triggers: List[TriggerSchema] = None
 
 
 
@@ -44,6 +54,8 @@ class JobSchema:
     duration: int = None
     log_url: str = None
     items_url: str = None
+
+
 
 
 class InstanceState:

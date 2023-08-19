@@ -12,6 +12,7 @@ from django.db.models.functions import Now
 from .models import InstanceModel, JobModel, ProjectModel, SpiderModel
 from .forms import AddInstanceForm
 from .scrapyd_handlers import get_all_active_jobs, get_IS, InstanceState, get_scrapyd_logs
+from schedules.models import Schedule
 
 
 
@@ -121,12 +122,21 @@ def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
     # take care spiders
     for spider_s in state.spiders:
         project = ProjectModel.objects.get(name=spider_s.project.name, instance__name=spider_s.project.instance.name)
-        SpiderModel.objects.create(
+        schedules = Schedule.objects.filter(spider_identifier=spider_s.identifier)
+        
+        if spider_s.name == 'wt_list':
+
+            print(f"Got schedules for {spider_s.name}: {len(schedules)}")
+
+        sp = SpiderModel.objects.create(
             project = project,
             instance = model,
             name = spider_s.name,
-            identifier = spider_s.identifier
-        ).save()
+            identifier = spider_s.identifier,
+        )
+        sp.schedules.set(schedules)
+        sp.save()
+
     # take care jobsget_IS
     for job_s in state.jobs:
         # retrieve project and spider
@@ -145,6 +155,7 @@ def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
             ended = job_s.end_time,
             duration = job_s.duration,  
             status = job_s.status).save()
+        
     return model
 
 

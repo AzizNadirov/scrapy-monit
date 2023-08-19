@@ -29,7 +29,6 @@ def api_daemon_status(url: str)->Union[requests.Response, None]:
 def api_list_projects(url: str):
     url = f"{url}listprojects.json"
     response = requests.get(url)
-    print(response)
     if response.status_code == 200:
         data = response.json()
         return data['projects']
@@ -111,7 +110,6 @@ def api_delproject(url: str, project: str):
         data = response.json()
         return data
     else:
-        print(response)
         return None
     
 
@@ -121,7 +119,6 @@ def get_scrapyd_logs(url: str, project_name: str, spider_name: str, job_id: str)
     url = f"{url}logs/{project_name}/{spider_name}/{job_id}.log"
     response = requests.get(url)
     if response.status_code == 200:
-        # print(f"GOT RES FRON REQ: {response.text}")
         return response.text
     else:
         raise Exception(f"Exception: status code got: {response.status_code}")

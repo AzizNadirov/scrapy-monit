@@ -11,7 +11,11 @@
             <tbody>
                 <tr>
                     <th scope="row">Spider</th>
-                    <td>{{ schedule.spider.name }}</td>
+                    <td>
+                        <a href="{{schedule.spider.get_absolute_url}}">
+                            {{ schedule.spider.name }}
+                        </a>
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row">Author</th>

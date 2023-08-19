@@ -17,6 +17,11 @@
           </li>
         </ul>
           {% if user.is_authenticated %}
+            {% if user.is_staff %}
+            <li class="nav-item d-flex pr-9 me-4">
+              <a class="nav-link btn btn-primary" href="{% url 'admin:index' %}">Admin</a>
+            </li>
+            {% endif %}
             <li class="nav-item d-flex pr-9 me-4">
               <a class="nav-link btn btn-primary" href="{% url 'profile' %}">Profile</a>
             </li>

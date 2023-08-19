@@ -27,7 +27,6 @@ class InstanceModel(models.Model):
     def is_active(self)->bool:
         """check if instance daemon is running"""
         r = api_daemon_status(url=self.address)
-        print(r is None)
         return not r is None
 
     
@@ -61,7 +60,7 @@ class SpiderModel(models.Model):
     project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE, related_name='spiders')
     name = models.CharField("Name", max_length=120)
     triggers = models.ManyToManyField("schedules.TriggerModel", related_name='spiders', null=True)
-    identifier = models.CharField("Identifier", max_length=120, null=True, default=f"{instance.name}:{name}", unique=True)
+    identifier = models.CharField("Identifier", max_length=120, null=True, default=f"{instance.name}:{project.name}:{name}", unique=True)
 
     def get_absolute_url(self):
         return reverse("spider_detail", kwargs={"name": self.instance.name, 'spider_name': self.name})
@@ -93,7 +92,6 @@ class JobModel(models.Model):
 
     def get_absolute_url(self):
         kwargs = {"instance_name": self.instance.name, 'spider_name': self.spider.name, 'job_id': self.id}
-        # print(f'reverse for: {kwargs}')
         return reverse("job_detail", kwargs=kwargs)
     
     
