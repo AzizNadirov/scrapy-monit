@@ -4,10 +4,8 @@ from datetime import datetime, timedelta
 from django.db.models import QuerySet
 
 from .exceptions import InstanceIsInactive
-from .scrapyd_api import (api_daemon_status, api_delproject, api_delversion, api_list_projects, api_listjobs,
-                          api_listspiders, api_listversions, get_scrapyd_logs, run_scrapy_spider, subdict)
-
-
+from .scrapyd_api import (api_daemon_status, api_list_projects, api_listjobs, 
+                          api_listspiders, get_scrapyd_logs, run_scrapy_spider, FailedSpider)
 
 
 @dataclass
@@ -67,6 +65,7 @@ class InstanceState:
         self.projects:  List[ProjectSchema] =   None
         self.spiders:   List[SpiderSchema] =    None
         self.jobs:      List[JobSchema] =       None
+        self.failed: bool = False
 
         if not self.check_deamon():
             self.active = False
@@ -75,6 +74,9 @@ class InstanceState:
             self.projects = self.get_projects()
             self.spiders = self.get_spiders()
             self.jobs = self.get_joblist()
+
+            # if scrapyd server is fallen
+            if isinstance(self.spiders, FailedSpider): self.failed = True 
 
 
 
@@ -121,14 +123,14 @@ class InstanceState:
         return [ProjectSchema(name=proj, instance=self.__schema) for proj in r]
     
 
-    def get_spiders(self) -> List[SpiderSchema]:
+    def get_spiders(self) -> List[SpiderSchema] | None | FailedSpider:
         """ returns list of spiders """
         assert not self.projects is None
         spiders = []
         for project in self.projects:
             r = api_listspiders(url=self.url, project=project.name)
-            if r is None:
-                return None
+            if isinstance(r, FailedSpider):
+                return r
             for spider in r:
                 spiders.append(SpiderSchema(name=spider, project=project, identifier=f"{self.name}:{spider}"))
 

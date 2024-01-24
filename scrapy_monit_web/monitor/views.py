@@ -11,10 +11,15 @@ from django.db.models.functions import Now
 
 from .models import InstanceModel, JobModel, ProjectModel, SpiderModel
 from .forms import AddInstanceForm
-from .scrapyd_handlers import get_all_active_jobs, get_IS, InstanceState, get_scrapyd_logs
+from .scrapyd_handlers import get_all_active_jobs, get_IS, InstanceState, get_scrapyd_logs, FailedSpider
 from schedules.models import Schedule
 
 
+
+def render_failed_spider(request, fail: FailedSpider):
+    print("in fallen")
+    context = {"url": fail.url, "message": fail.message}
+    return render(request, 'monitor/fallen_instance.html', context)
 
 
 class MainView(View):
@@ -36,6 +41,12 @@ class MainView(View):
                 states = get_IS(instances_active)
                 assert len(instances_active) == len(states)
                 instances_active = [save_state(model, state) for model, state in zip(instances_active, states)]
+
+                # if fallen instance:
+                failed_instances = [ins for ins in instances_active if isinstance(ins, FailedSpider)]
+                if failed_instances:
+                    return render_failed_spider(request, failed_instances[0])
+                
                 active_jobs = get_all_active_jobs(instances_active)
 
                 content = {'instances': instances, 'actives': active_jobs}
@@ -120,22 +131,23 @@ def save_state(model: InstanceModel, state: InstanceState)->InstanceModel:
             instance = model,
             name = project_s.name).save()
     # take care spiders
-    for spider_s in state.spiders:
-        project = ProjectModel.objects.get(name=spider_s.project.name, instance__name=spider_s.project.instance.name)
-        schedules = Schedule.objects.filter(spider_identifier=spider_s.identifier)
-        
-        if spider_s.name == 'wt_list':
+    # if scrapyd server is fallen
+    if isinstance(state.spiders, FailedSpider): 
+        return state.spiders
 
-            print(f"Got schedules for {spider_s.name}: {len(schedules)}")
+    else:
+        for spider_s in state.spiders:
+            project = ProjectModel.objects.get(name=spider_s.project.name, instance__name=spider_s.project.instance.name)
+            schedules = Schedule.objects.filter(spider_identifier=spider_s.identifier)
 
-        sp = SpiderModel.objects.create(
-            project = project,
-            instance = model,
-            name = spider_s.name,
-            identifier = spider_s.identifier,
-        )
-        sp.schedules.set(schedules)
-        sp.save()
+            sp = SpiderModel.objects.create(
+                project = project,
+                instance = model,
+                name = spider_s.name,
+                identifier = spider_s.identifier,
+            )
+            sp.schedules.set(schedules)
+            sp.save()
 
     # take care jobsget_IS
     for job_s in state.jobs:

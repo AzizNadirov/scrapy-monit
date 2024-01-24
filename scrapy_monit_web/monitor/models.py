@@ -22,7 +22,6 @@ class InstanceModel(models.Model):
     author = models.ForeignKey('users.Profile', on_delete=models.SET_NULL, null=True)
     active = models.BooleanField(default=True)
 
-
     
     def is_active(self)->bool:
         """check if instance daemon is running"""

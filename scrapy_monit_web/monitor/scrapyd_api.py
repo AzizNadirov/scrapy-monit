@@ -1,7 +1,15 @@
 # scrapyd API functions
-
 import requests
 from typing import List, Tuple, Union, Optional
+from dataclasses import dataclass
+
+
+@dataclass
+class FailedSpider:
+    """ server side error """
+    url: str
+    message: str
+    name: str = None
 
 
 
@@ -50,7 +58,7 @@ def api_listversions(url: str, project: str='default'):
         return None
 
 
-def api_listspiders(url: str, project: str='default', _version: str=None)-> List[str]:
+def api_listspiders(url: str, project: str='default', _version: str=None)-> List[str] | -1 | None:
     """  """
     endp = f"{url}listspiders.json"
     # check if project in projects
@@ -63,6 +71,9 @@ def api_listspiders(url: str, project: str='default', _version: str=None)-> List
         response = requests.get(endp, params=params)
         if response.status_code == 200:
             data = response.json()
+            print(f"data list spiders: ")
+            if data['status'] == 'error':
+                return FailedSpider(url=url, message=data['message'])
             return data['spiders']
         else:
             return None
