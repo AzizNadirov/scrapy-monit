@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block body %}
+    <button type="button" class="btn btn-success mt-2">
+        <i class="bi bi-plus"></i> 
+        <a href="{% url "add_instance" %}">Add Instance</a>
+    </button>
+    <br>
+    <hr>
+    {% for instance in instances %}
+        <tr class="hover-effect">
+            {% if instance.active %}
+            <td>
+                <a class="card-title h4" href="{{ instance.get_absolute_url }}">{{ instance.name }}</a>
+                <br>
+                <td>
+                    <strong>Projects:</strong> {{ instance.projects.all|length }}
+                </td>
+                <td>
+                    <strong>Spiders:</strong> {{ instance.projects.first.spiders.all|length }}
+                </td>
+                <td>
+                    <strong>Jobs:</strong> {{ instance.jobs.all|length }}
+                </td>
+            {% else %}
+                <a class="card-title h4" href="#">{{ instance.name }}</a>
+                <span class="card-text danger">INSTANCE IS <strong class="button button-danger">INACTIVE</strong></span>
+            {% endif %}
+            </td>
+        </tr>
+    {%empty%}
+        <tr>
+            <td colspan="4">
+                <h5 class="h5">There are no instances yet.</h5>
+            </td>
+        </tr>
+    {% endfor %}
+{% endblock body %}

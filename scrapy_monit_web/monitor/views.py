@@ -11,7 +11,8 @@ from django.db.models.functions import Now
 
 from .models import InstanceModel, JobModel, ProjectModel, SpiderModel
 from .forms import AddInstanceForm
-from .scrapyd_handlers import get_all_active_jobs, get_IS, InstanceState, get_scrapyd_logs, FailedSpider
+from .scrapyd_handlers import (get_all_active_jobs, get_IS, InstanceState, get_scrapyd_logs, FailedSpider,
+                               )
 from schedules.models import Schedule
 
 
@@ -82,6 +83,7 @@ class AddInstanceView(LoginRequiredMixin, CreateView):
         form.instance.author = self.request.user
         return super().form_valid(form)
     
+    context_object_name = 'form'
 
 
 class UpdateInstanceView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -116,6 +118,13 @@ class JobDetailView(LoginRequiredMixin, View):
         logs = job.get_logs()
         context = {'job': job, 'logs': logs}
         return render(request, 'monitor/job_details.html', context)
+    
+
+class InstanceListView(LoginRequiredMixin, ListView):
+    model = InstanceModel
+    template_name = 'monitor/instance_list.html'
+    context_object_name = 'instances'
+
     
 
 

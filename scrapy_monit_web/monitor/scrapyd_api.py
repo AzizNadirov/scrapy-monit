@@ -58,7 +58,7 @@ def api_listversions(url: str, project: str='default'):
         return None
 
 
-def api_listspiders(url: str, project: str='default', _version: str=None)-> List[str] | -1 | None:
+def api_listspiders(url: str, project: str='default', _version: str=None)-> List[str] | None:
     """  """
     endp = f"{url}listspiders.json"
     # check if project in projects
@@ -148,4 +148,14 @@ def run_scrapy_spider(url: str, spider_name: str, project_name: str='default')->
         print('Spider scheduling failed.')
         return False
 
+
+def cancel_scrapy_spider(url: str, job_id: str, project_name: str='default')->bool:
+    """ cancel spider """
+    cancel_url = f'{url}cancel.json'
+    response = requests.post(cancel_url, data={'project': project_name, 'job': job_id})
+    if response.status_code == 200:
+        return True
+    else:
+        print('Spider cancellation failed.')
+        return False
 

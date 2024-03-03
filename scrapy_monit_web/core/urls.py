@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 
-from monitor.views import MainView, AddInstanceView, DetailInstanceView, SpiderDetailView, JobDetailView
+from monitor.views import MainView, AddInstanceView, DetailInstanceView, SpiderDetailView, JobDetailView, InstanceListView
 from users.views import register, ProfileView, edit_profile_view
 
 
@@ -18,6 +18,7 @@ urlpatterns = [
     path('profile/', ProfileView.as_view(), name = 'profile'),
     path('profedit/', edit_profile_view, name = 'edit_profile'),
     # CRUD instance
+    path('instances/', InstanceListView.as_view(), name = 'instance_list'),
     path('add/', AddInstanceView.as_view(), name = 'add_instance'),
     path('instance/<str:name>/', DetailInstanceView.as_view(), name = 'instance_detail'),
     path('instance/<str:name>/<str:spider_name>/', SpiderDetailView.as_view(), name = 'spider_detail'),

@@ -33,12 +33,9 @@ class InstanceModel(models.Model):
         return reverse("instance_detail", kwargs={"name": self.name})
     
 
-
     def __str__(self):
         return f"ScrapyInstance: {self.name}"
     
-
-
 
 
 class ProjectModel(models.Model):
@@ -59,7 +56,7 @@ class SpiderModel(models.Model):
     project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE, related_name='spiders')
     name = models.CharField("Name", max_length=120)
     triggers = models.ManyToManyField("schedules.TriggerModel", related_name='spiders', null=True)
-    identifier = models.CharField("Identifier", max_length=120, null=True, default=f"{instance.name}:{project.name}:{name}", unique=True)
+    identifier = models.CharField("Identifier", max_length=120, null=True, default=f"{instance.name}:{name}", unique=True)
 
     def get_absolute_url(self):
         return reverse("spider_detail", kwargs={"name": self.instance.name, 'spider_name': self.name})

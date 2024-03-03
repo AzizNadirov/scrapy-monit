@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from django.db.models import QuerySet
 
 from .exceptions import InstanceIsInactive
-from .scrapyd_api import (api_daemon_status, api_list_projects, api_listjobs, 
-                          api_listspiders, get_scrapyd_logs, run_scrapy_spider, FailedSpider)
+from .scrapyd_api import (api_daemon_status, api_list_projects, api_listjobs, api_listspiders, 
+                          get_scrapyd_logs, run_scrapy_spider, FailedSpider, cancel_scrapy_spider)
 
 
 @dataclass
@@ -35,7 +35,7 @@ class SpiderSchema:
     project: ProjectSchema
     identifier: str
     triggers: List[TriggerSchema] = None
-
+    jobs = ...
 
 
 @dataclass
@@ -102,7 +102,7 @@ class InstanceState:
                     j.duration = j.duration.total_seconds() / 60
                 j.instance = self.__schema
                 j.project = ProjectSchema(name=j.project, instance=self.__schema)
-                j.spider = SpiderSchema(name=j.spider, project=j.project)
+                j.spider = SpiderSchema(name=j.spider, project=j.project, identifier=f"{j.instance.name}:{j.spider}")
                 jobs_res.append(j)
 
         return jobs_res
@@ -146,7 +146,17 @@ class InstanceState:
             return False
         
         return run_scrapy_spider(url=self.url, spider_name=name, project_name=project_name)
+    
+
+    def cancel_spider(self, spider_name: str, project_name: str='default') -> bool:
+        """ cancel spider """
+        if not spider_name in [spider.name for spider in self.spiders]:
+            return False
         
+        if not project_name in [project_name.name for project in self.projects]:
+            return False
+        
+        return cancel_scrapy_spider(url=self.url, job_id=spider_name, project_name=project_name)
 
 
     def get_joblist(self)-> List[JobSchema]:
@@ -187,3 +197,4 @@ def get_all_active_jobs(instances, top_n: int =5) -> dict:
         res[instance.name] = res[instance.name][: top_n]
 
     return res
+
